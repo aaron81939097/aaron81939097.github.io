@@ -1,13 +1,16 @@
 <div id="gitmentContainer"></div>
 
 <script>
-    var gitment = new Gitment({
-        owner: 'itec-hong',
-        repo: 'https://github.com/itec-hong/itec-hong.github.io.git',
-        oauth: {
-            client_id: '1f24046accb4909196a2',
-            client_secret: '8b0e134953ed5150f74dad7dfb6a73d96c97b60d',
-        },
+    $(function() {
+        var gitment = new Gitment({
+            owner: 'itec-hong',
+            repo: 'https://github.com/itec-hong/itec-hong.github.io.git',
+            oauth: {
+                client_id: '1f24046accb4909196a2',
+                client_secret: '8b0e134953ed5150f74dad7dfb6a73d96c97b60d',
+            },
+        });
+        gitment.render('gitmentContainer');
+        $('.gitment-footer-container').text('');
     });
-    gitment.render('gitmentContainer');
 </script>
