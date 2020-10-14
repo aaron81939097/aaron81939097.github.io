@@ -1,16 +1,15 @@
-<div id="gitmentContainer"></div>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
 
-<script>
-    $(function() {
-        var gitment = new Gitment({
-            owner: 'itec-hong',
-            repo: 'itec-hong.github.io',
-            oauth: {
-                client_id: '1f24046accb4909196a2',
-                client_secret: '8b0e134953ed5150f74dad7dfb6a73d96c97b60d',
-            },
-        });
-        gitment.render('gitmentContainer');
-        $('.gitment-footer-container').text('');
+        // gitalk的主要参数
+        clientID: '1f24046accb4909196a2',
+        clientSecret: '8b0e134953ed5150f74dad7dfb6a73d96c97b60d',
+        repo: 'itec-hong.github.io',
+        owner: 'itec-hong',
+        admin: ['itec-hong'],
+        id: window.location.pathname,
+
     });
+    gitalk.render('gitalk-container');
 </script>
