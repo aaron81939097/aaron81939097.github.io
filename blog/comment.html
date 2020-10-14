@@ -1,15 +1,20 @@
 <div id="gitalk-container"></div>
 <script type="text/javascript">
-    var gitalk = new Gitalk({
+    $(function() {
+        var id = window.location.pathname;
+        if (id == '\/') {
+            id = '/index.html';
+        }
+        var gitalk = new Gitalk({
+            // gitalk的主要参数
+            clientID: '5fe0e8b7d58ff0d311a9',
+            clientSecret: 'fcb2fb74bb79b1ffde281a0be142752ca8e90ab3',
+            repo: 'https://github.com/hyh2451619684/issue.git',
+            owner: 'itec-hong',
+            admin: ['itec-hong'],
+            id: id
 
-        // gitalk的主要参数
-        clientID: '1f24046accb4909196a2',
-        clientSecret: '8b0e134953ed5150f74dad7dfb6a73d96c97b60d',
-        repo: 'itec-hong.github.io',
-        owner: 'itec-hong',
-        admin: ['itec-hong'],
-        id: window.location.pathname,
-
+        });
+        gitalk.render('gitalk-container');
     });
-    gitalk.render('gitalk-container');
 </script>
