@@ -8,6 +8,7 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="./css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
     <style>
         body {
             color: #4B0082;
@@ -26,6 +27,9 @@
             <div class="col-9" style="padding-left: 0;">
                 <div class="jumbotron">
 
+
+                    <div id="comment">
+                    </div>
                 </div>
             </div>
         </div>
@@ -36,6 +40,8 @@
     <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
     <script src="./js/jquery-3.5.1.min.js"></script>
     <script src="./js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
 
     <script type="text/javascript">
         $(function() {
@@ -54,6 +60,12 @@
             $.get("blog/left.html",
                 function(data) {
                     $('#left').html(data);
+                }
+            );
+
+            $.get("blog/comment.html",
+                function(data) {
+                    $('#comment').html(data);
                 }
             );
         });
