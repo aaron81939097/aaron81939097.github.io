@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+
+    <title>Itec Hong Blog,博客,Flutter,Router,路由,命名路由</title>
+</head>
+
+<body>
+    <div id="css">
+    </div>
+    <div class="container">
+        <div id='header'></div>
+        <div class="row">
+            <div id="left" class="col-3">
+
+            </div>
+            <div class="col-9" style="padding-left: 0;">
+                <div class="jumbotron" style="background-color: #FDFCFC;">
+                    <h1 class="display-4">命名路由</h1>
+                    <p>Flutter也支持命名路由，在<code>MaterialApp</code>或<code>CupertinoApp</code>中的<code>routes</code>参数中定义:</p>
+                    <br>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(Nav2App());
+}
+
+class Nav2App extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      routes: {
+        '/': (context) => HomeScreen(),
+        '/details': (context) => DetailScreen(),
+      },
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: FlatButton(
+          child: Text('View Details'),
+          onPressed: () {
+            Navigator.pushNamed(
+              context,
+              '/details',
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class DetailScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: FlatButton(
+          child: Text('Pop!'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
+}
+</code>
+                    </figure>
+
+                    
+                    <p>命名路由必须提前定义好。尽管可以传参数到命名路由，但是路由不能识别动态参数。例如，如果是web app, 不能从命名为<code>/details/:id</code>的路由中得到<code>ID</code></p>
+                    <br>
+                    <h4 >使用<code>onGenerateRoute</code>的高级命名路由</h4>
+                    <p>一个更灵活的使用命名路由的方法是用<code>onGenerateRoute。</code></p>
+                    <p>下面的代码能够处理所有的path:</p>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+                       
+onGenerateRoute: (settings) {
+  // Handle '/'
+  if (settings.name == '/') {
+    return MaterialPageRoute(builder: (context) => HomeScreen());
+  }
+  
+  // Handle '/details/:id'
+  var uri = Uri.parse(settings.name);
+  if (uri.pathSegments.length == 2 &&
+      uri.pathSegments.first == 'details') {
+    var id = uri.pathSegments[1];
+    return MaterialPageRoute(builder: (context) => DetailScreen(id: id));
+  }
+  
+  return MaterialPageRoute(builder: (context) => UnknownScreen());
+},
+                         </code>
+                        </figure>
+                        
+
+                    <p>下面是完整的代码：</p>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(Nav2App());
+}
+
+class Nav2App extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      onGenerateRoute: (settings) {
+        // Handle '/'
+        if (settings.name == '/') {
+          return MaterialPageRoute(builder: (context) => HomeScreen());
+        }
+
+        // Handle '/details/:id'
+        var uri = Uri.parse(settings.name);
+        if (uri.pathSegments.length == 2 &&
+            uri.pathSegments.first == 'details') {
+          var id = uri.pathSegments[1];
+          return MaterialPageRoute(builder: (context) => DetailScreen(id: id));
+        }
+
+        return MaterialPageRoute(builder: (context) => UnknownScreen());
+      },
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: FlatButton(
+          child: Text('View Details'),
+          onPressed: () {
+            Navigator.pushNamed(
+              context,
+              '/details/1',
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class DetailScreen extends StatelessWidget {
+  String id;
+
+  DetailScreen({
+    this.id,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Viewing details for item $id'),
+            FlatButton(
+              child: Text('Pop!'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class UnknownScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Text('404!'),
+      ),
+    );
+  }
+}
+                       </code>
+                        </figure>
+                        <p><code>settings</code>是<code>RouteSettings</code>的一个实例。当调用<code>Navigator.pushNamed</code>或设置<code>initialRoute</code>时需要提供路由名字和参数的值。</p>
+                    <div id="comment">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="footer"></div>
+    </div>
+
+    <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <script src="/js/blog.js"></script>
+    <div id="script">
+    </div>
+
+
+</body>
+
+</html>
