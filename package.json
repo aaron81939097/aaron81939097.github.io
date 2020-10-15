@@ -1,22 +1,24 @@
 {
-    "name": "aaron81939097.github.io",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/aaron81939097/aaron81939097.github.io.git"
-    },
-    "author": "",
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/aaron81939097/aaron81939097.github.io/issues"
-    },
-    "homepage": "https://github.com/aaron81939097/aaron81939097.github.io#readme",
-    "dependencies": {
-        "lite-server": "^2.5.4"
-    }
+  "name": "aaron81939097.github.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaron81939097/aaron81939097.github.io.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aaron81939097/aaron81939097.github.io/issues"
+  },
+  "homepage": "https://github.com/aaron81939097/aaron81939097.github.io#readme",
+  "dependencies": {
+    "bstreeview": "^1.2.0",
+    "clipboard": "^2.0.6",
+    "lite-server": "^2.5.4"
+  }
 }

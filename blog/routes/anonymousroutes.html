@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+
+    <title>Itec Hong Blog,博客,Router,路由,匿名路由</title>
+</head>
+
+<body>
+    <div id="css">
+    </div>
+    <div class="container">
+        <div id='header'></div>
+        <div class="row">
+            <div id="left" class="col-3">
+
+            </div>
+            <div class="col-9" style="padding-left: 0;">
+                <div class="jumbotron" style="background-color: #FDFCFC;">
+                    <h1 class="display-4">匿名路由</h1>
+                    <p>大多数的App显示页面像堆叠起来一样，在彼此页面的上面显示，在Flutter中，用<code>Navigator</code>很容易实现。</p>
+                    <br>
+                    <p><code>MaterialApp</code>和<code>CupertinoApp</code>中已经实现并包含一个<code>Navigator</code>实例。用<code>Navigator.of()</code>可以获得这个<code>navigator</code>,或者用<code>Navigator.push()</code>显示一个新的页面,用<code>Navigaotr.pop()</code>返回到前一个页面</p>
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(Nav2App());
+}
+
+class Nav2App extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: FlatButton(
+          child: Text('View Details'),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) {
+                return DetailScreen();
+              }),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class DetailScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: FlatButton(
+          child: Text('Pop!'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+  }
+}
+</code>
+                    </figure>
+
+                    
+                    <p>调用<code>push()</code>后，<code>DetailScreen</code>页面出现在<code>HomeScreen</code>的上面，如下图所示</p>
+                   <img src="./images/img_1.png" class="mx-auto d-block" alt="..."></img>
+                   <p>之前的页面（<code>HomeScreen</code>）仍然是组件树的一部分，因此当<code>DetailScreen</code>显示的时候，它的所有状态对象依然存在</p>
+                    <div id="comment">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="footer"></div>
+    </div>
+
+    <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <script src="/js/blog.js"></script>
+    <div id="script">
+    </div>
+
+
+</body>
+
+</html>

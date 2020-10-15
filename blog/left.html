@@ -1,4 +1,30 @@
-<ul class="list-group">
-    <li class="list-group-item">标题1111</li>
+<div id="leftTree">
+</div>
+<script type=" text/javascript ">
+    $(function() {
+        var tree = [{
+            text: "Flutter",
+            nodes: [{
+                text: "路由 ",
+                nodes: [{
+                    text: "匿名路由",
+                    href: "/blog/routes/anonymousroutes.html"
+                }]
+            }]
+        }];
 
-</ul>
+        $('#leftTree').bstreeview({
+            data: tree,
+            expandIcon: 'fa fa-angle-down fa-fw',
+            collapseIcon: 'fa fa-angle-right fa-fw',
+            indent: 1.25,
+            parentsMarginLeft: '1.25rem',
+            openNodeLinkOnNewTab: true
+        });
+
+        // alert($('div[data-toggle="collapse"]').length);
+        $('div[data-toggle="collapse"]').click();
+        $('div[href="' + window.location.pathname + '"]').css('backgroundColor', '#ADD8E6');
+
+    });
+</script>
