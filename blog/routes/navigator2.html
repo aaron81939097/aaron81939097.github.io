@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="zh">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+
+    <title>Itec Hong Blog,博客,Flutter,Router,路由,命名路由</title>
+</head>
+
+<body>
+    <div id="css">
+    </div>
+    <div class="container">
+        <div id='header'></div>
+        <div class="row">
+            <div id="left" class="col-3">
+
+            </div>
+            <div class="col-9" style="padding-left: 0;">
+                <div class="jumbotron" style="background-color: #FDFCFC;">
+                    <h1 class="display-4">Navigator 2.0</h1>
+                    <p>Navigator 2.0 提供了一系列全新的接口，可以实现将路由状态成为应用状态的一部分，并能够通过底层 API 实现参数解析的功能，新增的 API 如下</p>
+                    <ul class="list-unstyled">
+
+                        <li>Navigator 2.0 API 向框架添加了新类，以使应用程序的屏幕成为应用程序状态的功能，并提供解析来自底层平台（如 Web URL）的路由的功能。以下是新功能概述：
+                            <ul>
+                                <li>
+                                    <strong>Page</strong>，用来表示 Navigator 路由栈中各个页面的配置信息。</li>
+                                <li><strong>Router</strong>，用来制定要由 Navigator 展示的页面列表，通常，该页面列表会根据系统或应用程序的状态改变而改变。</li>
+                                <li><strong>RouteInformationParser</strong>，持有 RouteInformationProvider 提供的 RouteInformation ，可以将其解析为我们定义的数据类型。</li>
+                                <li><strong>RouterDelegate</strong>，定义应用程序中的路由行为，例如 Router 如何知道应用程序状态的变化以及如何响应。主要的工作就是监听 RouteInformationParser 和应用状态并通过当前页面列表构建 ·。</li>
+                                <li><strong>BackButtonDispatcher</strong>，响应后退按钮，并通知 Router</li>
+                            </ul>
+                        </li>
+
+                    </ul>
+
+                    <p>下图展示了 RouterDelegate 与 Router、RouteInformationParser 以及用用状态的交互原理，</p>
+                    <img src="./images/img_2.png" class="img-fluid"></img>
+                    <br>
+                    <br>
+                    <p>大致流程如下：</p>
+
+                    <ul class="list-unstyled">
+                        <li>
+                            <ol>
+                                <li>当系统打开新页面（如 “books / 2”）时，RouteInformationParser 会将其转换为应用中的具体数据类型 T（如 BooksRoutePath）。</li>
+                                <li>该数据类型会被传递给 RouterDelegate 的 setNewRoutePath 方法，我们可以在这里更新路由状态（如通过设置 selectedBookId）并调用 notifyListeners 响应该操作。</li>
+                                <li>notifyListeners 会通知 Router 重建 RouterDelegate（通过 build() 方法）.</li>
+                                <li>RouterDelegate.build() 返回一个新的 Navigator 实例，并最终展示出我们想要打开的页面（如 selectedBookId）。</li>
+                            </ol>
+                        </li>
+
+                    </ul>
+                    <br>
+                    <h1 class="display-4">Navigator 2.0 实战</h1>
+                    <p>下面，我们就来使用 Navigator 2.0 做一个小小练习，我们将实现一个 Flutter 应用，该应用作用在 Web 上时路由状态会与浏览器中的 URL 连接保持一致，而且也能够处理浏览器的回退按钮，如下：</p>
+                    <img src="./images/img_3.gif" class="img-fluid"></img>
+                    <br><br>
+                    <p>接下来，使用 flutter channel master 将 Flutter 切换到 master 版本，<a href="https://flutter.dev/docs/get-started/web#create-a-new-project-with-web-support">创建一个支持 Web 应用的 Flutter 项目</a>，lib/main.dart 中的代码如下</p>
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-dart" data-lang="dart">
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(BooksApp());
+}
+
+class Book {
+  final String title;
+  final String author;
+
+  Book(this.title, this.author);
+}
+
+class BooksApp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _BooksAppState();
+}
+
+class _BooksAppState extends State<BooksApp> {
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Books App',
+      home: Navigator(
+        pages: [
+          MaterialPage(
+            key: ValueKey('BooksListPage'),
+            child: Scaffold(),
+          )
+        ],
+        onPopPage: (route, result) => route.didPop(result),
+      ),
+    );
+  }
+}
+</code>
+                    </figure>
+
+                
+                        
+                    <h4>Pages</h4>
+                    <p>Navigator 接受一个 pages 参数，如果 Page 列表发生变化，Navigator 也需要更新当前路由栈来保持同步，下面我们就来使用该性质，在新建的项目中开发一个可以展示书单列表的应用</p>
+                    <p>_BooksAppState 中持有两个状态参数：书单列表和当前所选书籍：</p>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+class _BooksAppState extends State<BooksApp> {
+  // New:
+  Book _selectedBook;
+  bool show404 = false;
+  List<Book> books = [
+    Book('Stranger in a Strange Land', 'Robert A. Heinlein'),
+    Book('Foundation', 'Isaac Asimov'),
+    Book('Fahrenheit 451', 'Ray Bradbury'),
+  ];
+  
+  // ...
+                       </code>
+                        </figure>
+                       <br>
+                       <p>然后，在中_BooksAppState，返回一个带有 Page 对象列表的 Navigator ：</p>
+
+<div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+@override
+Widget build(BuildContext context) {
+  return MaterialApp(
+    title: 'Books App',
+    home: Navigator(
+      pages: [
+        MaterialPage(
+          key: ValueKey('BooksListPage'),
+          child: BooksListScreen(
+            books: books,
+            onTapped: _handleBookTapped,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+void _handleBookTapped(Book book) {
+    setState(() {
+      _selectedBook = book;
+    });
+  }
+// ...
+class BooksListScreen extends StatelessWidget {
+  final List<Book> books;
+  final ValueChanged<Book> onTapped;
+BooksListScreen({
+    @required this.books,
+    @required this.onTapped,
+  });
+@override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: ListView(
+        children: [
+          for (var book in books)
+            ListTile(
+              title: Text(book.title),
+              subtitle: Text(book.author),
+              onTap: () => onTapped(book),
+            )
+        ],
+      ),
+    );
+  }
+}
+
+                       </code>
+                        </figure>
+                        <br>
+                        <p>由于此应用会有两个页面（一个书单列表也和一个详情的页面），如果选择了某本书（使用 collection if），则会加入详细页：</p>
+
+                         <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+pages: [
+  MaterialPage(
+    key: ValueKey('BooksListPage'),
+    child: BooksListScreen(
+      books: books,
+      onTapped: _handleBookTapped,
+    ),
+  ),
+	// New:
+  if (show404)
+    MaterialPage(key: ValueKey('UnknownPage'), child: UnknownScreen())
+  else if (_selectedBook != null)
+    MaterialPage(
+        key: ValueKey(_selectedBook),
+        child: BookDetailsScreen(book: _selectedBook))
+],
+
+                       </code>
+                        </figure>
+                        <p>注意，这里的 key 会由 book 对象中的值定义作为 MaterialPage 的唯一标识，也就是说，book 对象不同这里的 MaterialPage 就不同。没有唯一的 key，框架就无法确定何时显示不同 Page 之间的过渡动画。</p>
+                    
+                    <p>我们还可以继承 Page 来实现自定义行为，例如，在该页面添加了自定义过渡动画：</p>
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+class BookDetailsPage extends Page {
+  final Book book;
+  
+  BookDetailsPage({
+    this.book,
+  }) : super(key: ValueKey(book));
+  
+  Route createRoute(BuildContext context) {
+    return PageRouteBuilder(
+      settings: this,
+      pageBuilder: (context, animation, animation2) {
+        final tween = Tween(begin: Offset(0.0, 1.0), end: Offset.zero);
+        final curveTween = CurveTween(curve: Curves.easeInOut);
+        return SlideTransition(
+          position: animation.drive(curveTween).drive(tween),
+          child: BookDetailsScreen(
+            key: ValueKey(book),
+            book: book,
+          ),
+        );
+      },
+    );
+  }
+}
+
+                       </code>
+                       </figure>
+
+                       <p>
+                           还需要注意的是，只传入 pages 参数而不传入 onPopPage 也会报错，他接受一个回调函数，每次 Navigator.pop() 被调用时就会出发这个函数，我们可以在其中更新路由状态
+                       </p>
+                       <p>最后，在pages不提供onPopPage回调的情况下提供参数是错误的。每次调用时都会Navigator.pop()调用此函数。应该使用它来更新状态（修改页面列表），这里我们需要调用 didPop 方法确定是否 pop 成功：</p>
+                        
+                         <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+onPopPage: (route, result) {
+  if (!route.didPop(result)) {
+    return false;
+  }
+
+  // Update the list of pages by setting _selectedBook to null
+  setState(() {
+    _selectedBook = null;
+  });
+
+  return true;
+},
+
+                       </code>
+                       </figure>
+                       <br>
+                       <p>我们还必须在更新应用程序状态之前检查是否 pop 失败。这里，我们使用了 setState 方法来通知 Flutter 调用 build() 方法，该方法 _selectedBook 为 null 表示展示书单列表页。</p>
+                       <p>完整代码如下：</p>
+
+                       <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(BooksApp());
+}
+
+class Book {
+  final String title;
+  final String author;
+
+  Book(this.title, this.author);
+}
+
+class BooksApp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _BooksAppState();
+}
+
+class _BooksAppState extends State<BooksApp> {
+  Book _selectedBook;
+
+  List<Book> books = [
+    Book('Stranger in a Strange Land', 'Robert A. Heinlein'),
+    Book('Foundation', 'Isaac Asimov'),
+    Book('Fahrenheit 451', 'Ray Bradbury'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Books App',
+      home: Navigator(
+        pages: [
+          MaterialPage(
+            key: ValueKey('BooksListPage'),
+            child: BooksListScreen(
+              books: books,
+              onTapped: _handleBookTapped,
+            ),
+          ),
+          if (_selectedBook != null) BookDetailsPage(book: _selectedBook)
+        ],
+        onPopPage: (route, result) {
+          if (!route.didPop(result)) {
+            return false;
+          }
+
+          // Update the list of pages by setting _selectedBook to null
+          setState(() {
+            _selectedBook = null;
+          });
+
+          return true;
+        },
+      ),
+    );
+  }
+
+  void _handleBookTapped(Book book) {
+    setState(() {
+      _selectedBook = book;
+    });
+  }
+}
+
+class BookDetailsPage extends Page {
+  final Book book;
+
+  BookDetailsPage({
+    this.book,
+  }) : super(key: ValueKey(book));
+
+  Route createRoute(BuildContext context) {
+    return MaterialPageRoute(
+      settings: this,
+      builder: (BuildContext context) {
+        return BookDetailsScreen(book: book);
+      },
+    );
+  }
+}
+
+class BooksListScreen extends StatelessWidget {
+  final List<Book> books;
+  final ValueChanged<Book> onTapped;
+
+  BooksListScreen({
+    @required this.books,
+    @required this.onTapped,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: ListView(
+        children: [
+          for (var book in books)
+            ListTile(
+              title: Text(book.title),
+              subtitle: Text(book.author),
+              onTap: () => onTapped(book),
+            )
+        ],
+      ),
+    );
+  }
+}
+
+class BookDetailsScreen extends StatelessWidget {
+  final Book book;
+
+  BookDetailsScreen({
+    @required this.book,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (book != null) ...[
+              Text(book.title, style: Theme.of(context).textTheme.headline6),
+              Text(book.author, style: Theme.of(context).textTheme.subtitle1),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+                       </code>
+                       </figure>
+                       <br>
+                       <p>目前，我们就实现了声明式的路由管理，单此时我们还无法处理浏览器的后退按钮，也不能同步浏览器地址拦中的链接。</p>
+                       <h4>Router</h4>
+                       <p>本节，我们来实现通过 RouteInformationParser, RouterDelegate 更新路由状态，实现与浏览器地址拦中的链接同步</p>
+                       <h4>数据类型</h4>
+                       <p>首先，我们需要通过 RouteInformationParser 将路由信息解析为指定的数据类型：
+                       </p>
+                       <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+  class BookRoutePath {
+  final int id;
+  final bool isUnknown;
+
+  BookRoutePath.home()
+      : id = null,
+        isUnknown = false;
+
+  BookRoutePath.details(this.id) : isUnknown = false;
+
+  BookRoutePath.unknown()
+      : id = null,
+        isUnknown = true;
+
+  bool get isHomePage => id == null;
+
+  bool get isDetailsPage => id != null;
+}
+                        </code></pre></figure>
+                    <p>在该应用程序中，可以使用 BookRoutePath 类来表示应用程序中的路由路径，我们也可以实现父子类来关系其他各类型的路由信息。</p>
+                    <h4>RouterDelegate</h4>
+                    <p>接下来，我们实现一个 RouterDelegate 的子类 BookRouterDelegate：</p>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+class BookRouterDelegate extends RouterDelegate<BookRoutePath>
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin<BookRoutePath> {
+  @override
+  Widget build(BuildContext context) {
+    // TODO
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO
+  GlobalKey<NavigatorState> get navigatorKey => throw UnimplementedError();
+
+  @override
+  Future<void> setNewRoutePath(BookRoutePath configuration) {
+    // TODO
+    throw UnimplementedError();
+  }
+}
+                    </code></pre></figure>
+
+
+                    <p>BookRouterDelegate 的泛型为 BookRoutePath，其中包含了决定显示哪个页面所需的所有状态。</p>
+                    <p>此时，我们就可以将 _BooksAppState 中的路由相关的逻辑放到 BookRouterDelegate 中，这里，我们创建了一个 GlobalKey 对象，其他各个状态也都保存在这里面：</p>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+class BookRouterDelegate extends RouterDelegate<BookRoutePath>
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin<BookRoutePath> {
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  Book _selectedBook;
+  bool show404 = false;
+
+  List<Book> books = [
+    Book('Stranger in a Strange Land', 'Robert A. Heinlein'),
+    Book('Foundation', 'Isaac Asimov'),
+    Book('Fahrenheit 451', 'Ray Bradbury'),
+  ];
+
+  BookRouterDelegate() : navigatorKey = GlobalKey<NavigatorState>();
+  // ...
+                    </code></pre></figure>
+
+
+                    <p>为了能在 URL 中显示正确的路径，我们也需要根据应用程序的当前状态返回一个 BookRoutePath 对象：</p>
+
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+
+BookRoutePath get currentConfiguration {
+  if (show404) {
+    return BookRoutePath.unknown();
+  }
+
+  return _selectedBook == null
+      ? BookRoutePath.home()
+      : BookRoutePath.details(books.indexOf(_selectedBook));
+}
+                    </code></pre></figure>
+
+                    <p>下面，build 方法返回一个 Navigator 组件：</p>
+
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+@override
+Widget build(BuildContext context) {
+  return Navigator(
+    key: navigatorKey,
+    pages: [
+      MaterialPage(
+        key: ValueKey('BooksListPage'),
+        child: BooksListScreen(
+          books: books,
+          onTapped: _handleBookTapped,
+        ),
+      ),
+      if (show404)
+        MaterialPage(key: ValueKey('UnknownPage'), child: UnknownScreen())
+      else if (_selectedBook != null)
+        BookDetailsPage(book: _selectedBook)
+    ],
+    onPopPage: (route, result) {
+      if (!route.didPop(result)) {
+        return false;
+      }
+
+      // Update the list of pages by setting _selectedBook to null
+      _selectedBook = null;
+      show404 = false;
+      notifyListeners();
+
+      return true;
+    },
+  );
+}
+                    </code></pre></figure>
+
+                    <p>因为该类并不是组件，而是由 ChangeNotifier 实现，因此这里的 onPopPage 方法需要使用 notifyListeners 替代 setState 来改变状态，当 RouterDelegate 触发状态更新时，Router 同样会触发 RouterDelegate 的 currentConfiguration 方法并调用 build 方法创建出一个新的 Navigator 组件。</p>
+
+                    <p>_handleBookTapped方法也需要使用 notifyListeners 代替 setState：</p>
+
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+void _handleBookTapped(Book book) {
+  _selectedBook = book;
+  notifyListeners();
+}
+                    </code></pre></figure>
+                    <p>新页面打开后，Router 会调用setNewRoutePath 方法来更新应用程序的路由状态：</p>
+
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+        @override
+Future<void> setNewRoutePath(BookRoutePath path) async {
+  if (path.isUnknown) {
+    _selectedBook = null;
+    show404 = true;
+    return;
+  }
+
+  if (path.isDetailsPage) {
+    if (path.id < 0 || path.id > books.length - 1) {
+      show404 = true;
+      return;
+    }
+
+    _selectedBook = books[path.id];
+  } else {
+    _selectedBook = null;
+  }
+
+  show404 = false;
+}
+                    </code></pre></figure>
+                    <h4>RouteInformationParser</h4>
+                    <p>RouteInformationParser 内部含有一个钩子函数，接受路由信息（RouteInformation），我们可以在这里将它转换成指定的数据类型（BookRoutePath）并使用 Uri 解析：</p>
+
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+class BookRouteInformationParser extends RouteInformationParser<BookRoutePath> {
+  @override
+  Future<BookRoutePath> parseRouteInformation(
+      RouteInformation routeInformation) async {
+    final uri = Uri.parse(routeInformation.location);
+    // Handle '/'
+    if (uri.pathSegments.length == 0) {
+      return BookRoutePath.home();
+    }
+
+    // Handle '/book/:id'
+    if (uri.pathSegments.length == 2) {
+      if (uri.pathSegments[0] != 'book') return BookRoutePath.unknown();
+      var remaining = uri.pathSegments[1];
+      var id = int.tryParse(remaining);
+      if (id == null) return BookRoutePath.unknown();
+      return BookRoutePath.details(id);
+    }
+
+    // Handle unknown routes
+    return BookRoutePath.unknown();
+  }
+
+  @override
+  RouteInformation restoreRouteInformation(BookRoutePath path) {
+    if (path.isUnknown) {
+      return RouteInformation(location: '/404');
+    }
+    if (path.isHomePage) {
+      return RouteInformation(location: '/');
+    }
+    if (path.isDetailsPage) {
+      return RouteInformation(location: '/book/${path.id}');
+    }
+    return null;
+  }
+}
+                    </code></pre></figure>
+                    <p>该实现仅针对此应用，并不是常规的路由解析解决方案，具体原理，我们以后再详细了解。最后，要使用这些定义好的类，我们还需要使用全新的 MaterialApp.router 构造函数并传入它们各自的实现：</p>
+
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+return MaterialApp.router(
+  title: 'Books App',
+  routerDelegate: _routerDelegate,
+  routeInformationParser: _routeInformationParser,
+);
+                    </code></pre></figure>
+                    <p>完整代码如下：</p>
+
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(BooksApp());
+}
+
+class Book {
+  final String title;
+  final String author;
+
+  Book(this.title, this.author);
+}
+
+class BooksApp extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _BooksAppState();
+}
+
+class _BooksAppState extends State<BooksApp> {
+  BookRouterDelegate _routerDelegate = BookRouterDelegate();
+  BookRouteInformationParser _routeInformationParser =
+      BookRouteInformationParser();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      title: 'Books App',
+      routerDelegate: _routerDelegate,
+      routeInformationParser: _routeInformationParser,
+    );
+  }
+}
+
+class BookRouteInformationParser extends RouteInformationParser<BookRoutePath> {
+  @override
+  Future<BookRoutePath> parseRouteInformation(
+      RouteInformation routeInformation) async {
+    final uri = Uri.parse(routeInformation.location);
+    // Handle '/'
+    if (uri.pathSegments.length == 0) {
+      return BookRoutePath.home();
+    }
+
+    // Handle '/book/:id'
+    if (uri.pathSegments.length == 2) {
+      if (uri.pathSegments[0] != 'book') return BookRoutePath.unknown();
+      var remaining = uri.pathSegments[1];
+      var id = int.tryParse(remaining);
+      if (id == null) return BookRoutePath.unknown();
+      return BookRoutePath.details(id);
+    }
+
+    // Handle unknown routes
+    return BookRoutePath.unknown();
+  }
+
+  @override
+  RouteInformation restoreRouteInformation(BookRoutePath path) {
+    if (path.isUnknown) {
+      return RouteInformation(location: '/404');
+    }
+    if (path.isHomePage) {
+      return RouteInformation(location: '/');
+    }
+    if (path.isDetailsPage) {
+      return RouteInformation(location: '/book/${path.id}');
+    }
+    return null;
+  }
+}
+
+class BookRouterDelegate extends RouterDelegate<BookRoutePath>
+    with ChangeNotifier, PopNavigatorRouterDelegateMixin<BookRoutePath> {
+  final GlobalKey<NavigatorState> navigatorKey;
+
+  Book _selectedBook;
+  bool show404 = false;
+
+  List<Book> books = [
+    Book('Stranger in a Strange Land', 'Robert A. Heinlein'),
+    Book('Foundation', 'Isaac Asimov'),
+    Book('Fahrenheit 451', 'Ray Bradbury'),
+  ];
+
+  BookRouterDelegate() : navigatorKey = GlobalKey<NavigatorState>();
+
+  BookRoutePath get currentConfiguration {
+    if (show404) {
+      return BookRoutePath.unknown();
+    }
+    return _selectedBook == null
+        ? BookRoutePath.home()
+        : BookRoutePath.details(books.indexOf(_selectedBook));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: navigatorKey,
+      pages: [
+        MaterialPage(
+          key: ValueKey('BooksListPage'),
+          child: BooksListScreen(
+            books: books,
+            onTapped: _handleBookTapped,
+          ),
+        ),
+        if (show404)
+          MaterialPage(key: ValueKey('UnknownPage'), child: UnknownScreen())
+        else if (_selectedBook != null)
+          BookDetailsPage(book: _selectedBook)
+      ],
+      onPopPage: (route, result) {
+        if (!route.didPop(result)) {
+          return false;
+        }
+
+        // Update the list of pages by setting _selectedBook to null
+        _selectedBook = null;
+        show404 = false;
+        notifyListeners();
+
+        return true;
+      },
+    );
+  }
+
+  @override
+  Future<void> setNewRoutePath(BookRoutePath path) async {
+    if (path.isUnknown) {
+      _selectedBook = null;
+      show404 = true;
+      return;
+    }
+
+    if (path.isDetailsPage) {
+      if (path.id < 0 || path.id > books.length - 1) {
+        show404 = true;
+        return;
+      }
+
+      _selectedBook = books[path.id];
+    } else {
+      _selectedBook = null;
+    }
+
+    show404 = false;
+  }
+
+  void _handleBookTapped(Book book) {
+    _selectedBook = book;
+    notifyListeners();
+  }
+}
+
+class BookDetailsPage extends Page {
+  final Book book;
+
+  BookDetailsPage({
+    this.book,
+  }) : super(key: ValueKey(book));
+
+  Route createRoute(BuildContext context) {
+    return MaterialPageRoute(
+      settings: this,
+      builder: (BuildContext context) {
+        return BookDetailsScreen(book: book);
+      },
+    );
+  }
+}
+
+class BookRoutePath {
+  final int id;
+  final bool isUnknown;
+
+  BookRoutePath.home()
+      : id = null,
+        isUnknown = false;
+
+  BookRoutePath.details(this.id) : isUnknown = false;
+
+  BookRoutePath.unknown()
+      : id = null,
+        isUnknown = true;
+
+  bool get isHomePage => id == null;
+
+  bool get isDetailsPage => id != null;
+}
+
+class BooksListScreen extends StatelessWidget {
+  final List<Book> books;
+  final ValueChanged<Book> onTapped;
+
+  BooksListScreen({
+    @required this.books,
+    @required this.onTapped,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: ListView(
+        children: [
+          for (var book in books)
+            ListTile(
+              title: Text(book.title),
+              subtitle: Text(book.author),
+              onTap: () => onTapped(book),
+            )
+        ],
+      ),
+    );
+  }
+}
+
+class BookDetailsScreen extends StatelessWidget {
+  final Book book;
+
+  BookDetailsScreen({
+    @required this.book,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (book != null) ...[
+              Text(book.title, style: Theme.of(context).textTheme.headline6),
+              Text(book.author, style: Theme.of(context).textTheme.subtitle1),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class UnknownScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Text('404!'),
+      ),
+    );
+  }
+}
+                    </code></pre></figure>
+                    <p>现在，在 Chrome 中运行该示例就会展示当前访问链接的路由页面，并在手动修改 URL 后也会导航到正确的页面。</p>
+                    <h4>TransitionDelegate</h4>
+                    <p>我们也可以通过 TransitionDelegate 实现自定义的路由动画。</p>
+                    <p>首先，向 Navigator 传入一个自定义 TransitionDelegate 对象：</p>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+        // New:
+TransitionDelegate transitionDelegate = NoAnimationTransitionDelegate();
+
+      child: Navigator(
+        key: navigatorKey,
+        // New:
+        transitionDelegate: transitionDelegate,
+                    </code></pre></figure>
+                    <p>例如，以下实现回关闭所有路由过渡动画：</p>
+
+                    <div class="bd-clipboard"><button type="button" class="btn-clipboard" title="" data-original-title="Copy to clipboard">Copy</button></div>
+                    <figure class="highlight"><pre><code class="language-html" data-lang="html">
+class NoAnimationTransitionDelegate extends TransitionDelegate<void> {
+  @override
+  Iterable<RouteTransitionRecord> resolve({
+    List<RouteTransitionRecord> newPageRouteHistory,
+    Map<RouteTransitionRecord, RouteTransitionRecord>
+        locationToExitingPageRoute,
+    Map<RouteTransitionRecord, List<RouteTransitionRecord>>
+        pageRouteToPagelessRoutes,
+  }) {
+    final results = <RouteTransitionRecord>[];
+
+    for (final pageRoute in newPageRouteHistory) {
+      if (pageRoute.isWaitingForEnteringDecision) {
+        pageRoute.markForAdd();
+      }
+      results.add(pageRoute);
+    }
+
+    for (final exitingPageRoute in locationToExitingPageRoute.values) {
+      if (exitingPageRoute.isWaitingForExitingDecision) {
+        exitingPageRoute.markForRemove();
+        final pagelessRoutes = pageRouteToPagelessRoutes[exitingPageRoute];
+        if (pagelessRoutes != null) {
+          for (final pagelessRoute in pagelessRoutes) {
+            pagelessRoute.markForRemove();
+          }
+        }
+      }
+
+      results.add(exitingPageRoute);
+    }
+    return results;
+  }
+}
+                    </code></pre></figure>
+                    <ul class="list-unstyled">
+                        <li>这里，NoAnimationTransitionDelegate 重写了 TransitionDelegate 的 resolve() 方法，该方法可以指定各种路由页面过渡动画是否展示，有如下几个方法：
+                            <ul>
+                                <li><strong>markForPush</strong> ，打开页面时使用过渡动画。
+                                </li>
+                                <li><strong>markForAdd</strong>，打开页面时不使用过渡动画。</li>
+                                <li><strong>markForPop</strong>，弹出页面时使用动画，并通知应用，即将该事件传递给 AppRouterDelegate 的 onPopPage 函数。</li>
+                                <li><strong>markForComplete</strong> ，弹出页面时不使用过渡动画，同样会通知应用。</li>
+                                <li><strong>markForRemove</strong> ，弹出页面时不使用过渡动画，不会通知应用。</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>该类仅影响最新的声明式 API，因此后退按钮仍显示过渡动画。</p>
+                    <p>大致流程如下：这里遍历了所有声明的页面，包括新页面（newPageRouteHistory）和已存在的页面（locationToExitingPageRoute），使用上述几个方法标记它们。在新页面中使用 markForAdd 去除打开的过渡动画，locationToExitingPageRoute 中则使用 markForRemove 不展示过渡动画，并不会通知应用。
+                        <a href="http://gist.github.com/bbca91e23bbb4d39247fa922533be7c9">查看完整示例。</a></p>
+                    <div id="comment">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="footer"></div>
+    </div>
+    <!-- Option 1: jQuery and Bootstrap Bundle (includes Popper) -->
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <script src="/js/blog.js"></script>
+    <div id="script">
+    </div>
+
+
+</body>
+
+</html>
